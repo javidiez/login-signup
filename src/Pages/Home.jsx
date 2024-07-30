@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Home() {
     const { store, actions } = useAppContext();
-    const { users, name, email, password, token } = store;
+    const { users, name, token, favoriteTeam, userId } = store;  // Asegúrate de tener userId en el estado
     const navigate = useNavigate();
 
 
@@ -23,18 +23,30 @@ function Home() {
     }
 
     useEffect(() => {
-        if (!token) {
-            navigate('/login');
+        if (token) {
+            actions.fetchUsers();
+            if (userId) {
+                actions.fetchFavoriteTeam(); // Llamar a fetchFavoriteTeam aquí también
+            }
         } else {
-            actions.fetchUsers();  // Volver a cargar la lista de usuarios cuando se monta el componente
+            navigate('/login');
         }
-    }, [token]);
+    }, [token, userId]);
+
 
     return (
         <>
             <button className='btn btn-danger cerrar-sesion' onClick={handlelogOut}>Cerrar sesión</button>
             <div className='d-flex flex-column justify-content-center align-items-center'>
                 <p className='display-1 text-light'>Hola {name}</p>
+                {favoriteTeam ? (
+                                <div className='text-light'>
+                                    <h2>Tu equipo favorito:</h2>
+                                    <p className='text-center'>{favoriteTeam.name}</p>
+                                </div>
+                            ) : (
+                                <p className='text-light'>No tienes un equipo favorito asignado</p>
+                            )}
                 <h1 className='text-light'>Usuarios</h1>
                 <ul>
                     {users.map(user => (

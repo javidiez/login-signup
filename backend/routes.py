@@ -1,7 +1,7 @@
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 from flask import Blueprint, request, jsonify
 from . import db
-from .models import User
+from .models import User, Team
 from werkzeug.security import generate_password_hash, check_password_hash
 
 api = Blueprint('api', __name__)
@@ -95,7 +95,43 @@ def create_token():
 
     # Crea un nuevo token con el id de usuario dentro
     access_token = create_access_token(identity=user.id)
-    return jsonify({ "token": access_token, "user_id": user.id, "email":user.email, "name": user.name })
+    return jsonify({ "token": access_token, "user_id": user.id, "email":user.email, "name": user.name, 'userId': user.id  })
+
+
+@api.route('/user/<int:user_id>/favorite_team', methods=['GET'])
+def get_user_favorite_team(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    
+    if user.favorite_team is None:
+        return jsonify({'error': 'No favorite team found'}), 404
+
+    team = {
+        'id': user.favorite_team.id,
+        'name': user.favorite_team.name
+    }
+    return jsonify(team)
+
+
+
+
+@api.route('/user/<int:user_id>/favorite_team', methods=['PUT'])
+def update_favorite_team(user_id):
+    data = request.get_json()
+    user = User.query.get(user_id)
+    if user:
+        user.favorite_team_id = data.get('team_id')
+        db.session.commit()
+        return jsonify({'message': 'Favorite team updated'})
+    else:
+        return jsonify({'error': 'User not found'}), 404
+
+@api.route('/teams', methods=['GET'])
+def get_teams():
+    teams = Team.query.all()
+    return jsonify([{'id': team.id, 'name': team.name} for team in teams])
+
 
 
 @api.route("/protected", methods=["GET"])
