@@ -4,13 +4,16 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
 	const [users, setUsers] = useState([]);
+	const [teams, setTeams] = useState([]);
 	const [contactoElegido, setContactoElegido] = useState({})
-	const [name, setName] = useState(sessionStorage.getItem('name') || '');
+	const [equipoElegido, setEquipoElegido] = useState({})
+	const [name, setName] = useState('');
     const [email, setEmail] = useState(sessionStorage.getItem('email') || '');
     const [password, setPassword] = useState('');
 	const [token, setToken] = useState(sessionStorage.getItem('token') || '')
 	const [favoriteTeam, setFavoriteTeam] = useState(null);
 	const [userId, setUserId] = useState(sessionStorage.getItem('userId') || ''); // Estado para userId
+	const [teamId, setTeamId] = useState(sessionStorage.getItem('teamId') || ''); // Estado para userId
 
 
 	const fetchUsers = async () => {
@@ -27,6 +30,24 @@ export const AppProvider = ({ children }) => {
 			console.error('There was an error fetching the users!', error);
 		}
 	};
+
+	const fetchUserDetails = async () => {
+		if (!userId) {
+			console.error('User ID is not available');
+			return;
+		}
+		try {
+			const response = await fetch(`http://127.0.0.1:5000/users/${userId}`);
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+            const data = await response.json();
+            setName(data.name);
+            setEmail(data.email);
+        } catch (error) {
+            console.error('There was an error fetching the user details!', error);
+        }
+    };
 
 	const deleteUser = async (id) => {
         try {
@@ -68,6 +89,7 @@ export const AppProvider = ({ children }) => {
 			// Actualiza el usuario en la lista existente
 			setUsers(users.map(user => (user.id === id ? data : user)));
 			console.log('User updated successfully:', data);	
+
 			fetchUsers();
 		} catch (error) {
 			console.error('There was an error updating the user:', error);
@@ -183,10 +205,23 @@ export const AppProvider = ({ children }) => {
 			console.error('There was an error fetching the favorite team!', error);
 		}
 	};
-	
-	
 
-// Agregar función para actualizar equipo favorito
+	const fetchTeams = async () => {
+		try {
+			const response = await fetch('http://127.0.0.1:5000/teams');
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const data = await response.json();
+			setTeams([...data]);
+		} catch (error) {
+			console.error('There was an error fetching the users!', error);
+		}
+	};
+
+	// Agregar función para actualizar equipo favorito
 const updateFavoriteTeam = async (userId, teamId) => {
     try {
         const response = await fetch(`http://127.0.0.1:5000/user/${userId}/favorite_team`, {
@@ -200,7 +235,7 @@ const updateFavoriteTeam = async (userId, teamId) => {
         if (!response.ok) throw new Error(`Network response was not ok ${response.statusText}`);
 
         console.log('Favorite team updated successfully');
-        fetchUsers(); // Volver a cargar la lista de usuarios
+		fetchFavoriteTeam();
     } catch (error) {
         console.error('There was an error updating the favorite team:', error);
     }
@@ -208,22 +243,15 @@ const updateFavoriteTeam = async (userId, teamId) => {
 
 useEffect(() => {
     const storedToken = sessionStorage.getItem('token');
-    const storedName = sessionStorage.getItem('name');
-    const storedEmail = sessionStorage.getItem('email');
     const storedUserId = sessionStorage.getItem('userId');
 
     if (storedToken) {
         setToken(storedToken);
     }
-    if (storedName) {
-        setName(storedName);
-    }
-    if (storedEmail) {
-        setEmail(storedEmail);
-    }
     if (storedUserId) {
-        setUserId(storedUserId);
-        fetchFavoriteTeam();  // Obtener equipo favorito si userId está presente
+		setUserId(storedUserId);
+		fetchUserDetails(storedUserId); // Fetch user details if userId is available
+		fetchFavoriteTeam(); // Obtener equipo favorito si userId está presente
     } else {
         console.error('userId is not set in session storage');
     }
@@ -231,8 +259,8 @@ useEffect(() => {
 		
 
 
-	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam };
-	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, updateFavoriteTeam };
+	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams };
+	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails };
 
 	return (
 		<AppContext.Provider value={{ store, actions }}>

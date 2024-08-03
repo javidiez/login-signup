@@ -9,22 +9,24 @@ api = Blueprint('api', __name__)
 @api.route('/users', methods=['GET'])
 def get_users():
     users = User.query.all()
-    return jsonify([{'id': user.id, 'name': user.name, 'email': user.email, 'password': user.password} for user in users])
+    return jsonify([user.serialize() for user in users])
 
 @api.route('/users/signup', methods=['POST'])
 def add_user():
     data = request.json
     if 'name' not in data or 'email' not in data or 'password' not in data:
         return jsonify({'error': 'Missing data'}), 400
+    
+    hashed_password = generate_password_hash(data['password'])  # Hash the password
 
     new_user = User(
         name=data['name'],
         email=data['email'],
-        password=data['password']
+        password=hashed_password
     )
 
     db.session.add(new_user)
-    db.session.commit() 
+    db.session.commit()
         # Crear un token de acceso
     access_token = create_access_token(identity=new_user.id)
 
@@ -33,8 +35,7 @@ def add_user():
         "access_token": access_token,
         'id': new_user.id,
         'name': new_user.name,
-        'email': new_user.email,
-        'password': new_user.password}), 201
+        'email': new_user.email}), 201
 
 @api.route('/users/delete/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -87,10 +88,14 @@ def create_token():
     password = request.json.get("password", None)
 
     # Consulta la base de datos por el nombre de usuario y la contraseña
-    user = User.query.filter_by(email=email, password=password).first()
+    user = User.query.filter_by(email=email).first()
 
     if user is None:
         # el usuario no se encontró en la base de datos
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    if not check_password_hash(user.password, password):
+        # Incorrect password
         return jsonify({"msg": "Bad username or password"}), 401
 
     # Crea un nuevo token con el id de usuario dentro
@@ -103,17 +108,24 @@ def get_user_favorite_team(user_id):
     user = User.query.get(user_id)
     if user is None:
         return jsonify({'error': 'User not found'}), 404
-    
+
     if user.favorite_team is None:
         return jsonify({'error': 'No favorite team found'}), 404
 
-    team = {
-        'id': user.favorite_team.id,
-        'name': user.favorite_team.name
+    return jsonify(user.favorite_team.serialize())
+
+@api.route('/users/<int:user_id>', methods=['GET'])
+def get_users_details(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+
+    usuario = {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email
     }
-    return jsonify(team)
-
-
+    return jsonify(usuario)
 
 
 @api.route('/user/<int:user_id>/favorite_team', methods=['PUT'])
