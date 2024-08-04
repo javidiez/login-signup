@@ -7,8 +7,10 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     favorite_team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
+    family_id = db.Column(db.Integer, db.ForeignKey('families.id'))
 
     favorite_team = db.relationship('Team', backref='users')
+    family_members = db.relationship('Family', backref='user', foreign_keys='Family.user_id')
 
     def __repr__(self):
         return f'<User {self.name}>'
@@ -34,4 +36,29 @@ class Team(db.Model):
             "id": self.id,
             "name": self.name
         }
-        
+
+class Family(db.Model):
+    __tablename__ = 'families'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
+
+    def __init__(self, name, type, user_id):
+        valid_types = ['hermano', 'hermana', 'papá', 'mamá', 'mascota']
+        if type not in valid_types:
+            raise ValueError(f'Invalid type: {type}')
+        self.name = name
+        self.type = type
+        self.user_id = user_id
+
+    def __repr__(self):
+        return f'<Family {self.name}>'
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "type": self.type,
+            "user_id": self.user_id
+        }

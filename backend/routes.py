@@ -1,7 +1,7 @@
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 from flask import Blueprint, request, jsonify
 from . import db
-from .models import User, Team
+from .models import User, Team, Family
 from werkzeug.security import generate_password_hash, check_password_hash
 
 api = Blueprint('api', __name__)
@@ -10,6 +10,22 @@ api = Blueprint('api', __name__)
 def get_users():
     users = User.query.all()
     return jsonify([user.serialize() for user in users])
+
+@api.route('/family/<int:user_id>/add', methods=['POST'])
+def add_family_member(user_id):
+    data = request.get_json()
+    if not data or not 'name' in data or not 'type' in data:
+        return jsonify({'error': 'Invalid input'}), 400
+
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+
+    new_family_member = Family(name=data['name'], type=data['type'], user_id=user_id)
+    db.session.add(new_family_member)
+    db.session.commit()
+
+    return jsonify(new_family_member.serialize()), 201
 
 @api.route('/users/signup', methods=['POST'])
 def add_user():
@@ -67,11 +83,14 @@ def edit_user(user_id):
     if not data:
         return jsonify({"message": "No data provided"}), 400
 
-    # Actualizar el usuario con los nuevos datos
+ # Actualizar el usuario con los nuevos datos
     try:
-        user.name = data.get('name', user.name)  # Actualiza el campo name si se proporciona
-        user.email = data.get('email', user.email)  # Actualiza el campo email si se proporciona
-        user.password = data.get('password', user.password)  # Actualiza el campo password si se proporciona
+        if 'name' in data:
+            user.name = data['name']  # Actualiza el campo name si se proporciona
+        if 'email' in data:
+            user.email = data['email']  # Actualiza el campo email si se proporciona
+        if 'password' in data:
+            user.password = generate_password_hash(data['password'])  # Hashea la nueva contraseña si se proporciona
 
         db.session.commit()  # Guarda los cambios en la base de datos
 
@@ -114,6 +133,18 @@ def get_user_favorite_team(user_id):
 
     return jsonify(user.favorite_team.serialize())
 
+@api.route('/user/<int:user_id>/members', methods=['GET'])
+def get_user_family_members(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+
+    family_members = user.family_members
+    if not family_members:
+        return jsonify({'error': 'No family member found'}), 404
+
+    return jsonify([member.serialize() for member in family_members])
+
 @api.route('/users/<int:user_id>', methods=['GET'])
 def get_users_details(user_id):
     user = User.query.get(user_id)
@@ -143,8 +174,6 @@ def update_favorite_team(user_id):
 def get_teams():
     teams = Team.query.all()
     return jsonify([{'id': team.id, 'name': team.name} for team in teams])
-
-
 
 @api.route("/protected", methods=["GET"])
 @jwt_required()

@@ -5,15 +5,17 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
 	const [users, setUsers] = useState([]);
 	const [teams, setTeams] = useState([]);
+	const [families, setFamilies] = useState([]);
 	const [contactoElegido, setContactoElegido] = useState({})
-	const [equipoElegido, setEquipoElegido] = useState({})
 	const [name, setName] = useState('');
     const [email, setEmail] = useState(sessionStorage.getItem('email') || '');
     const [password, setPassword] = useState('');
 	const [token, setToken] = useState(sessionStorage.getItem('token') || '')
 	const [favoriteTeam, setFavoriteTeam] = useState(null);
 	const [userId, setUserId] = useState(sessionStorage.getItem('userId') || ''); // Estado para userId
-	const [teamId, setTeamId] = useState(sessionStorage.getItem('teamId') || ''); // Estado para userId
+	const [teamId, setTeamId] = useState(sessionStorage.getItem('teamId') || ''); 
+	const [familiarName, setFamiliarName] = useState('');
+	const [familiarType, setFamiliarType] = useState('');
 
 
 	const fetchUsers = async () => {
@@ -112,8 +114,6 @@ export const AppProvider = ({ children }) => {
 			const data = await resp.json();
 			
 			if (data.token) { 
-				// Guardar el token en el estado
-				
 	
 				// Guardar el token en sessionStorage
 				sessionStorage.setItem('token', data.token);
@@ -123,7 +123,7 @@ export const AppProvider = ({ children }) => {
                 setToken(data.token);
                 setName(data.name);
                 setEmail(data.email);
-                setUserId(data.userId);  // Actualizar el estado
+                setUserId(data.userId); 
 				setFavoriteTeam(data.favoriteTeam)
 				console.log("Success:", data);
 			} else {
@@ -159,8 +159,6 @@ export const AppProvider = ({ children }) => {
 				setUsers([...users, data]);
 				// Guardar el token en sessionStorage
 				sessionStorage.setItem('token', data.access_token);
-				sessionStorage.setItem('name', data.name);
-				sessionStorage.setItem('email', data.email);
 				setToken(data.access_token);
 				setName(data.name);
 				setEmail(data.email);
@@ -222,7 +220,7 @@ export const AppProvider = ({ children }) => {
 	};
 
 	// Agregar función para actualizar equipo favorito
-const updateFavoriteTeam = async (userId, teamId) => {
+	const updateFavoriteTeam = async (userId, teamId) => {
     try {
         const response = await fetch(`http://127.0.0.1:5000/user/${userId}/favorite_team`, {
             method: 'PUT',
@@ -239,7 +237,54 @@ const updateFavoriteTeam = async (userId, teamId) => {
     } catch (error) {
         console.error('There was an error updating the favorite team:', error);
     }
-};
+	};
+
+	const addFamilyMember = async (userId, name, type) => {
+		if (!userId || !name || !type) {
+			console.error("User ID, name, and type are required");
+			return;
+		}
+		try {
+			const response = await fetch(`http://127.0.0.1:5000/family/${userId}/add`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ name, type }),
+			});
+	
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			const data = await response.json();
+			if (data && data.id) {
+				setFamilies((prevFamilies) => [...prevFamilies, data]);
+			} else {
+				console.error("Unexpected response format:", data);
+			}
+		} catch (error) {
+			console.error("Network error:", error);
+		}
+	};
+	
+
+	const getFamilyMembers = async () => {
+
+		if (!userId) {
+			console.error('User ID is not available');
+			return;
+		}
+		try {
+			const response = await fetch(`http://127.0.0.1:5000/user/${userId}/members`);
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+            const data = await response.json();
+            setFamilies(data);
+        } catch (error) {
+            console.error('There was an error fetching the user details!', error);
+        }
+    };
 
 useEffect(() => {
     const storedToken = sessionStorage.getItem('token');
@@ -251,7 +296,8 @@ useEffect(() => {
     if (storedUserId) {
 		setUserId(storedUserId);
 		fetchUserDetails(storedUserId); // Fetch user details if userId is available
-		fetchFavoriteTeam(); // Obtener equipo favorito si userId está presente
+		fetchFavoriteTeam(storedUserId); // Obtener equipo favorito si userId está presente
+		getFamilyMembers(storedUserId);
     } else {
         console.error('userId is not set in session storage');
     }
@@ -259,8 +305,8 @@ useEffect(() => {
 		
 
 
-	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams };
-	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails };
+	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams, families, familiarType, familiarName };
+	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails, addFamilyMember, setFamiliarName, setFamiliarType, getFamilyMembers };
 
 	return (
 		<AppContext.Provider value={{ store, actions }}>
