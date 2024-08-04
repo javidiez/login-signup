@@ -158,6 +158,22 @@ def get_users_details(user_id):
     }
     return jsonify(usuario)
 
+@api.route('/family/delete/<int:family_id>', methods=['DELETE'])
+def delete_family_member(family_id):
+    member = Family.query.get(family_id)
+
+       # Verificar si el usuario existe
+    if member is None:
+        return jsonify({"message": "member not found"}), 400
+
+    # Eliminar el usuario de la base de datos
+    try:
+        db.session.delete(member)
+        db.session.commit()
+        return jsonify({"message": "member deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @api.route('/user/<int:user_id>/favorite_team', methods=['PUT'])
 def update_favorite_team(user_id):

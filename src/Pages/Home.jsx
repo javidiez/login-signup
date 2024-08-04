@@ -26,6 +26,11 @@ function Home() {
         await actions.deleteUser(id);
     };
 
+
+    const handleDeleteFamilyMember = async (id) => {
+        await actions.deleteFamilyMember(id);
+    };
+
     const EditContact = (id) => {
         actions.singleContact(id);
         navigate('/edit_user');
@@ -74,7 +79,7 @@ function Home() {
                                     <li className='text-light'>
                                         Tu familiar se llama {familia.name} y es tu {familia.type}
                                     </li>
-                                    <button className='btn btn-primary'>Eliminar</button>
+                                    <button onClick={() => handleDeleteFamilyMember(familia.id)} className='btn btn-primary'>Eliminar</button>
                                 </div>
                             ))
                     ) : families.length == 0 ? (

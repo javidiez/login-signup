@@ -73,6 +73,29 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+	const deleteFamilyMember = async (id) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/family/delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Network response was not ok ${response.statusText}`);
+            }
+
+            // Actualiza el estado de la lista de usuarios después de eliminar
+            setFamilies(families.filter(member => member.id !== id));
+
+            console.log('Family member deleted successfully');
+        } catch (error) {
+            console.error('There was an error deleting the member:', error);
+        }
+    };
+
+
 	const editUser = async (id, name, email, password) => {
 		try {
 			const response = await fetch(`http://127.0.0.1:5000/users/edit/${id}`, {
@@ -306,7 +329,7 @@ useEffect(() => {
 
 
 	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams, families, familiarType, familiarName };
-	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails, addFamilyMember, setFamiliarName, setFamiliarType, getFamilyMembers };
+	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails, addFamilyMember, setFamiliarName, setFamiliarType, getFamilyMembers, deleteFamilyMember };
 
 	return (
 		<AppContext.Provider value={{ store, actions }}>
