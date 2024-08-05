@@ -1,4 +1,4 @@
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
 from . import db
 from .models import User, Team, Family
@@ -119,8 +119,7 @@ def create_token():
 
     # Crea un nuevo token con el id de usuario dentro
     access_token = create_access_token(identity=user.id)
-    return jsonify({ "token": access_token, "user_id": user.id, "email":user.email, "name": user.name, 'userId': user.id  })
-
+    return jsonify({ "token": access_token, "user_id": user.id, "email":user.email, "name": user.name, 'userId': user.id, 'is_admin': user.is_admin  })
 
 @api.route('/user/<int:user_id>/favorite_team', methods=['GET'])
 def get_user_favorite_team(user_id):
@@ -162,11 +161,11 @@ def get_users_details(user_id):
 def delete_family_member(family_id):
     member = Family.query.get(family_id)
 
-       # Verificar si el usuario existe
+    # Verificar si el familiar existe
     if member is None:
         return jsonify({"message": "member not found"}), 400
 
-    # Eliminar el usuario de la base de datos
+    # Eliminar el familiar de la base de datos
     try:
         db.session.delete(member)
         db.session.commit()
@@ -186,10 +185,56 @@ def update_favorite_team(user_id):
     else:
         return jsonify({'error': 'User not found'}), 404
 
+@api.route('/teams/add', methods=['POST'])
+def add_teams():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"Error": "No data provided"}), 400
+
+    if 'name' not in data:
+        return jsonify({"Error": "Missing 'name' field"}), 400
+
+    new_team = Team(name=data["name"])
+
+    db.session.add(new_team)
+    db.session.commit()
+
+    return jsonify(new_team.serialize()), 201
+
 @api.route('/teams', methods=['GET'])
 def get_teams():
     teams = Team.query.all()
     return jsonify([{'id': team.id, 'name': team.name} for team in teams])
+
+@api.route('/team/delete/<int:team_id>', methods=['DELETE'])
+def delete_team(team_id):
+    team = Team.query.get(team_id)
+
+    # Verificar si el familiar existe
+    if team is None:
+        return jsonify({"message": "team not found"}), 400
+
+    # Eliminar el familiar de la base de datos
+    try:
+        db.session.delete(team)
+        db.session.commit()
+        return jsonify({"message": "team deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/families', methods=['GET'])
+def get_families():
+    family = Family.query.all()
+
+    if family is None:
+        return jsonify({"msg": "Family not detected"})
+
+    return jsonify([familiar.serialize() for familiar in family])
+
+
+
 
 @api.route("/protected", methods=["GET"])
 @jwt_required()

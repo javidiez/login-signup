@@ -24,8 +24,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -54,10 +52,26 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.delete-icon{
+  cursor: pointer;
+}
+
 .cerrar-sesion{
   position: absolute;
   top: 50px;
   right: 50px;
+}
+
+.admin{
+  position: absolute;
+  top: 50px;
+  right: 200px;
+}
+
+.btn-home{
+position: absolute;
+top: 50px;
+right: 50px;
 }
 
 @media (prefers-color-scheme: light) {

@@ -5,6 +5,7 @@ import Home from "./Pages/Home";
 import { EditUser } from "./Pages/EditUser";
 import { LogIn } from "./Pages/Login";
 import { SignUp } from "./Pages/Signup";
+import { Admin } from "./Pages/Admin";
 
 
 //create your first component
@@ -20,6 +21,7 @@ const App = () => {
 						<Route path="/edit_user" element={<EditUser />} />
 						<Route path="/login" element={<LogIn />} />
 						<Route path="/signup" element={<SignUp />} />
+						<Route path="/admin" element={<Admin />} />
 					</Routes>
 			</BrowserRouter>
 		</div>

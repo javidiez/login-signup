@@ -8,9 +8,10 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     favorite_team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     family_id = db.Column(db.Integer, db.ForeignKey('families.id'))
+    is_admin = db.Column(db.Boolean, default=False)
 
     favorite_team = db.relationship('Team', backref='users')
-    family_members = db.relationship('Family', backref='user', foreign_keys='Family.user_id')
+    family_members = db.relationship('Family', back_populates='user', foreign_keys='Family.user_id')
 
     def __repr__(self):
         return f'<User {self.name}>'
@@ -20,7 +21,8 @@ class User(db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "favorite_team": self.favorite_team.serialize() if self.favorite_team else None
+            "favorite_team": self.favorite_team.serialize() if self.favorite_team else None,
+            "is_admin": self.is_admin
         }
 
 class Team(db.Model):
@@ -30,7 +32,7 @@ class Team(db.Model):
 
     def __repr__(self):
         return f'<Team {self.name}>'
-    
+
     def serialize(self):
         return {
             "id": self.id,
@@ -43,6 +45,8 @@ class Family(db.Model):
     name = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'))
+    
+    user = db.relationship('User', back_populates="family_members", foreign_keys=[user_id])
 
     def __init__(self, name, type, user_id):
         valid_types = ['hermano', 'hermana', 'papá', 'mamá', 'mascota']
@@ -54,11 +58,12 @@ class Family(db.Model):
 
     def __repr__(self):
         return f'<Family {self.name}>'
-    
+
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "type": self.type,
-            "user_id": self.user_id
+            "user_id": self.user_id,
+            "user_name": self.user.name if self.user else None
         }

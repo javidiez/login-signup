@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import useAppContext from '../store/AppContext'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 function Home() {
     const { store, actions } = useAppContext();
-    const { users, name, token, favoriteTeam, userId, teams, familiarName, familiarType, families } = store;
+    const { users, name, token, favoriteTeam, userId, teams, familiarName, familiarType, families, userType } = store;
     const navigate = useNavigate();
 
     const handleAddFamiliar = async (e) => {
@@ -22,18 +22,8 @@ function Home() {
         navigate('/home')
     };
 
-    const handleDeleteUser = async (id) => {
-        await actions.deleteUser(id);
-    };
-
-
     const handleDeleteFamilyMember = async (id) => {
         await actions.deleteFamilyMember(id);
-    };
-
-    const EditContact = (id) => {
-        actions.singleContact(id);
-        navigate('/edit_user');
     };
 
     const handlelogOut = () => {
@@ -54,21 +44,21 @@ function Home() {
 
             if (userId) {
                 actions.fetchFavoriteTeam();
-                console.log('Guardando el userId: ' + userId);
             } else {
                 console.error('userId no está disponible en useEffect');
             }
         } else {
             navigate('/login');
         }
-    }, [token, userId, navigate]);
-    
+    }, [token, userId, userType, navigate]);
+
 
     return (
         <>
+            {userType && (<Link to='/admin'><button className='btn btn-secondary admin'>Administrador</button></Link>)}
             <button className='btn btn-danger cerrar-sesion' onClick={handlelogOut}>Cerrar sesión</button>
             <div className='d-flex flex-column justify-content-center align-items-center'>
-                <p className='display-1 text-light'>Hola {name}</p>
+                <p className='display-1 text-light mt-5'>Hola {name}</p>
                 <h2 className='text-light'>Tu familia es:</h2>
                 <ul>
                     {families && families.length > 0 ? (
@@ -79,10 +69,12 @@ function Home() {
                                     <li className='text-light'>
                                         Tu familiar se llama {familia.name} y es tu {familia.type}
                                     </li>
-                                    <button onClick={() => handleDeleteFamilyMember(familia.id)} className='btn btn-primary'>Eliminar</button>
+                                    <span onClick={() => handleDeleteFamilyMember(familia.id)} class="material-symbols-outlined text-light delete-icon">
+                                        delete
+                                    </span>
                                 </div>
                             ))
-                    ) : families.length == 0 ? (
+                    ) : families && families.length == 0 ? (
                         <li className='text-light'>No tienes familia</li>
                     ) : 'Error al cargar la lista de familiares'}
                 </ul>
@@ -104,22 +96,28 @@ function Home() {
                         <option key={team.id} value={team.id}>{team.name}</option>
                     ))}
                 </select>
-                <h1 className='text-light'>Usuarios</h1>
-                <ul>
-                    {users.map(user => (
-                        <li key={user.id} className='d-flex align-items-center mt-4'>
-                            <span className='text-light pe-4'>{user.name} - {user.email} - {user.password}</span>
-                            <button className={favoriteTeam?.name === "Ferro" ? 'btn btn-success me-3' : favoriteTeam?.name === "River Plate" ? 'btn btn-danger me-3' : 'btn btn-warning me-3'} onClick={() => handleDeleteUser(user.id)}>Eliminar</button>
-                            <button className={favoriteTeam?.name === "Ferro" ? 'btn btn-success' : favoriteTeam?.name === "River Plate" ? 'btn btn-danger' : 'btn btn-primary'} onClick={() => EditContact(user.id)}>Editar</button>
-                        </li>
-                    ))}
-                </ul>
+
             </div>
-            <form className='d-flex flex-column' onSubmit={handleAddFamiliar}>
-                <label className='text-light pe-3'>Nombre</label><input type="text" value={familiarName} onChange={(e) => actions.setFamiliarName(e.target.value)} />
-                <label className='text-light pe-3'>Tipo</label><input type="text" value={familiarType} onChange={(e) => actions.setFamiliarType(e.target.value)} />
-                <button type='submit' className="btn btn-primary fs-3 fw-bolder">Añadir familiar</button>
-            </form>
+            <h2 className='text-light text-center mt-5'>Agregar familiares</h2>
+            <div className='d-flex justify-content-center'>
+
+                <form className='d-flex flex-column w-25' onSubmit={handleAddFamiliar}>
+                    <label className='text-light pe-3'>Nombre</label><input type="text" value={familiarName} onChange={(e) => actions.setFamiliarName(e.target.value)} />
+                    <label className='text-light pe-3'>Tipo</label>
+                    <select
+                        value={familiarType}
+                        onChange={(e) => actions.setFamiliarType(e.target.value)}
+                    >
+                        <option className='text-light pe-3' value="">Seleccionar el tipo</option>
+                        <option className='text-light pe-3' value="mascota">mascota</option>
+                        <option className='text-light pe-3' value="hermano">hermano</option>
+                        <option className='text-light pe-3' value="hermana">hermana</option>
+                        <option className='text-light pe-3' value="mamá">mamá</option>
+                        <option className='text-light pe-3' value="papá">papá</option>
+                    </select>
+                    <button type='submit' className="btn btn-primary fs-3 fw-bolder mt-4">Añadir familiar</button>
+                </form>
+            </div>
         </>
     );
 }

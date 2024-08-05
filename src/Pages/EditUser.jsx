@@ -5,7 +5,7 @@ import useAppContext from '../store/AppContext'
 
 export const EditUser = () => {
     const { store, actions } = useAppContext();
-    const { contactoElegido } = store;
+    const { contactoElegido, token } = store;
     const navigate = useNavigate();
 
     // Estado local para manejar los datos del formulario
@@ -24,10 +24,10 @@ export const EditUser = () => {
     }, [contactoElegido]);
 
     useEffect(() => {
-        if (!store.token) {
+        if (!token) {
             navigate('/login');
         }
-    }, [store.token, navigate])
+    }, [token, navigate])
 
     const handleChangeName = (e) => setFormName(e.target.value);
     const handleChangeEmail = (e) => setFormEmail(e.target.value);
@@ -37,7 +37,7 @@ export const EditUser = () => {
         e.preventDefault();
         if (contactId) {
             await actions.editUser(contactId, formName, formEmail, formPassword);
-            navigate("/");
+            navigate("/admin");
         } else {
             console.error('No contact ID found');
         }
@@ -66,7 +66,7 @@ export const EditUser = () => {
                 </div>
             </form>
             <br />
-            <Link to="/">
+            <Link to="/admin">
                 <button className="btn btn-warning">Ver usuarios</button>
             </Link>
         </div>
