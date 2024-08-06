@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 
 function Home() {
     const { store, actions } = useAppContext();
-    const { users, name, token, favoriteTeam, userId, teams, familiarName, familiarType, families, userType } = store;
+    const { users, name, token, favoriteTeam, userId, teams, familiarName, familiarType, families, isAdmin } = store;
     const navigate = useNavigate();
 
     const handleAddFamiliar = async (e) => {
@@ -50,12 +50,12 @@ function Home() {
         } else {
             navigate('/login');
         }
-    }, [token, userId, userType, navigate]);
+    }, [token, userId, isAdmin, navigate]);
 
 
     return (
         <>
-            {userType && (<Link to='/admin'><button className='btn btn-secondary admin'>Administrador</button></Link>)}
+            {isAdmin && (<Link to='/admin'><button className='btn btn-secondary admin'>Administrador</button></Link>)}
             <button className='btn btn-danger cerrar-sesion' onClick={handlelogOut}>Cerrar sesión</button>
             <div className='d-flex flex-column justify-content-center align-items-center'>
                 <p className='display-1 text-light mt-5'>Hola {name}</p>

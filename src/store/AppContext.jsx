@@ -15,7 +15,7 @@ export const AppProvider = ({ children }) => {
 	const [userId, setUserId] = useState(sessionStorage.getItem('userId') || ''); // Estado para userId
 	const [teamId, setTeamId] = useState(sessionStorage.getItem('teamId') || '');
 	const [teamName, setTeamName] = useState('');
-	const [userType, setUserType] = useState(sessionStorage.getItem('userType') || '');
+	const [isAdmin, setIsAdmin] = useState(sessionStorage.getItem('isAdmin') || '');
 	const [familiarName, setFamiliarName] = useState('');
 	const [familiarType, setFamiliarType] = useState('');
 	const [totalFamilies, setTotalFamilies] = useState([]);
@@ -168,13 +168,13 @@ export const AppProvider = ({ children }) => {
 				sessionStorage.setItem('name', data.name);
 				sessionStorage.setItem('email', data.email);
 				sessionStorage.setItem('userId', data.userId);  // Guardar userId
-				sessionStorage.setItem('userType', data.is_admin ? 'true' : 'false'); // Guardar is_admin como string 'true' o 'false'
+				sessionStorage.setItem('isAdmin', data.is_admin ? 'true' : 'false'); // Guardar is_admin como string 'true' o 'false'
 				setToken(data.token);
 				setName(data.name);
 				setEmail(data.email);
 				setUserId(data.userId);
 				setFavoriteTeam(data.favoriteTeam)
-				setUserType(data.is_admin ? true : false); // Asegúrate de que sea booleano
+				setIsAdmin(data.is_admin ? true : false); // Asegúrate de que sea booleano
 				console.log("Success:", data);
 			} else {
 				console.error("Token no recibido:", data);
@@ -406,7 +406,7 @@ export const AppProvider = ({ children }) => {
 	useEffect(() => {
 		const storedToken = sessionStorage.getItem('token');
 		const storedUserId = sessionStorage.getItem('userId');
-		const storedUserType = sessionStorage.getItem('userType') === 'true';
+		const storedIsAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
 		if (storedToken) {
 			setToken(storedToken);
@@ -416,7 +416,7 @@ export const AppProvider = ({ children }) => {
 			setUserId(storedUserId);
 			fetchUserDetails(storedUserId); // Fetch user details if userId is available
 			fetchFavoriteTeam(storedUserId); // Obtener equipo favorito si userId está presente
-			setUserType(storedUserType); // Configurar el estado con el valor booleano
+			setIsAdmin(storedIsAdmin); // Configurar el estado con el valor booleano
 			getFamilies();
 		} else {
 			console.error('userId is not set in session storage');
@@ -426,7 +426,7 @@ export const AppProvider = ({ children }) => {
 
 
 
-	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams, families, familiarType, familiarName, userType, totalFamilies ,teamName };
+	const store = { users, name, email, password, contactoElegido, token, userId, favoriteTeam, teamId, teams, families, familiarType, familiarName, isAdmin, totalFamilies ,teamName };
 	const actions = { fetchUsers, signUp, deleteUser, singleContact, editUser, setUsers, setEmail, setName, setPassword, logIn, logOut, fetchFavoriteTeam, fetchTeams, updateFavoriteTeam, fetchUserDetails, addFamilyMember, setFamiliarName, setFamiliarType, getFamilyMembers, deleteFamilyMember, getFamilies, deleteFamilyMemberAdmin, addTeams, deleteTeam, setTeamName };
 
 	return (

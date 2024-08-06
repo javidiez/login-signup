@@ -5,7 +5,7 @@ import useAppContext from '../store/AppContext'
 
 export const EditUser = () => {
     const { store, actions } = useAppContext();
-    const { contactoElegido, token } = store;
+    const { contactoElegido, token, isAdmin } = store;
     const navigate = useNavigate();
 
     // Estado local para manejar los datos del formulario
@@ -24,10 +24,20 @@ export const EditUser = () => {
     }, [contactoElegido]);
 
     useEffect(() => {
-        if (!token) {
+        if (token) {
+            if (isAdmin) {
+                actions.fetchUsers();
+                actions.getFamilies();
+                actions.fetchTeams();
+            }
+            else {
+                navigate('/home')
+            }
+        } else {
             navigate('/login');
         }
-    }, [token, navigate])
+    }, [token, isAdmin, navigate]);
+
 
     const handleChangeName = (e) => setFormName(e.target.value);
     const handleChangeEmail = (e) => setFormEmail(e.target.value);
@@ -45,6 +55,8 @@ export const EditUser = () => {
 
 
     return (
+        <>
+        {isAdmin && (
         <div className="container">
             <h1 className="text-center mb-5 mt-5">Editar Contacto</h1>
 
@@ -70,5 +82,7 @@ export const EditUser = () => {
                 <button className="btn btn-warning">Ver usuarios</button>
             </Link>
         </div>
+        )}
+        </>
     );
 };
